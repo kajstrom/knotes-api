@@ -5,6 +5,4 @@ export * from './storage.js';
 export * from './auth.js';
 export * from './lambda-api.js';
 export * from './distribution.js';
-
-// Future construct files to add here:
-//   export * from './dns';
+export * from './dns.js';
