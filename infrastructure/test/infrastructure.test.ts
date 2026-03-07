@@ -34,6 +34,7 @@ describe('KnotesApiDev stack', () => {
     isProd: false,
     domainName: 'knotes-api-dev.kstrm.com',
     cloudFrontDomain: 'https://placeholder.cloudfront.net',
+    alarmEmail: 'dev-alerts@kstrm.com',
   });
   const template = Template.fromStack(stack);
 
@@ -56,6 +57,7 @@ describe('KnotesApiProd stack', () => {
     isProd: true,
     domainName: 'knotes-api.kstrm.com',
     cloudFrontDomain: 'https://placeholder.cloudfront.net',
+    alarmEmail: 'prod-alerts@kstrm.com',
   });
   const template = Template.fromStack(stack);
 
@@ -81,6 +83,7 @@ describe('AuthConstruct', () => {
       isProd,
       domainName: 'knotes-auth-test',
       cloudFrontDomain,
+      alarmEmail: 'test-alerts@kstrm.com',
     });
     return Template.fromStack(stack);
   }

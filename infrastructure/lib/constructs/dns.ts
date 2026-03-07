@@ -8,46 +8,50 @@ import { Construct } from 'constructs';
 export interface DnsConstructProps {
   /** Root domain name of the existing Route 53 hosted zone, e.g. "kstrm.com". */
   readonly hostedZoneDomainName: string;
-  /** Full subdomain to alias to the distribution, e.g. "api.kstrm.com". */
+  /** Full subdomain for which a certificate and A record will be created, e.g. "knotes-api.kstrm.com". */
   readonly subdomain: string;
-  /** CloudFront distribution the A record will alias to. */
-  readonly distribution: cloudfront.IDistribution;
 }
 
 export class DnsConstruct extends Construct {
-  /** ARN of the ACM certificate provisioned in us-east-1. */
+  /** ACM certificate for the subdomain. Must be in us-east-1 for CloudFront — deploy this stack to us-east-1. */
+  public readonly certificate: acm.ICertificate;
+  /** ARN of the ACM certificate. */
   public readonly certificateArn: string;
+
+  private readonly hostedZone: route53.IHostedZone;
+  private readonly recordName: string;
 
   constructor(scope: Construct, id: string, props: DnsConstructProps) {
     super(scope, id);
 
-    const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
+    this.hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
       domainName: props.hostedZoneDomainName,
     });
 
-    // DnsValidatedCertificate provisions the certificate in us-east-1 via a
-    // Lambda-backed custom resource, which is required for CloudFront distributions.
-    const certificate = new acm.DnsValidatedCertificate(this, 'Certificate', {
+    this.certificate = new acm.Certificate(this, 'Certificate', {
       domainName: props.subdomain,
-      hostedZone,
-      region: 'us-east-1',
+      validation: acm.CertificateValidation.fromDns(this.hostedZone),
     });
 
-    this.certificateArn = certificate.certificateArn;
+    this.certificateArn = this.certificate.certificateArn;
 
     // Route 53 ARecord expects a relative record name (just the subdomain prefix).
-    const recordName = props.subdomain.endsWith(`.${props.hostedZoneDomainName}`)
+    this.recordName = props.subdomain.endsWith(`.${props.hostedZoneDomainName}`)
       ? props.subdomain.slice(0, -(props.hostedZoneDomainName.length + 1))
       : props.subdomain;
 
-    new route53.ARecord(this, 'AliasRecord', {
-      zone: hostedZone,
-      recordName,
-      target: route53.RecordTarget.fromAlias(
-        new route53Targets.CloudFrontTarget(props.distribution)
-      ),
-    });
-
     new cdk.CfnOutput(this, 'CertificateArn', { value: this.certificateArn });
+  }
+
+  /**
+   * Adds a Route 53 A alias record pointing at the given CloudFront distribution.
+   * Call this after the DistributionConstruct is created.
+   */
+  addAliasRecord(distribution: cloudfront.IDistribution): void {
+    new route53.ARecord(this, 'AliasRecord', {
+      zone: this.hostedZone,
+      recordName: this.recordName,
+      target: route53.RecordTarget.fromAlias(new route53Targets.CloudFrontTarget(distribution)),
+    });
   }
 }

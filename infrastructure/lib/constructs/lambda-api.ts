@@ -15,6 +15,7 @@ export interface ApiConstructProps {
 export class ApiConstruct extends Construct {
   public readonly apiUrl: string;
   public readonly lambdaFunction: lambda.Function;
+  public readonly restApi: apigateway.RestApi;
 
   constructor(scope: Construct, id: string, props: ApiConstructProps) {
     super(scope, id);
@@ -35,12 +36,14 @@ export class ApiConstruct extends Construct {
 
     const userPool = cognito.UserPool.fromUserPoolArn(this, 'UserPool', props.userPoolArn);
 
-    const api = new apigateway.RestApi(this, 'Api', {
+    this.restApi = new apigateway.RestApi(this, 'Api', {
       restApiName: 'knotes-api',
       deployOptions: {
         stageName: 'api',
       },
     });
+
+    const api = this.restApi;
 
     const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'Authorizer', {
       cognitoUserPools: [userPool],

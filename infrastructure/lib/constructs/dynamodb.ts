@@ -1,12 +1,9 @@
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
 export interface DynamoConstructProps {
   readonly isProd: boolean;
-  readonly lambdaFunction: lambda.IFunction;
 }
 
 /**
@@ -38,15 +35,5 @@ export class DynamoConstruct extends Construct {
     // Export table name and ARN
     this.tableName = this.table.tableName;
     this.tableArn = this.table.tableArn;
-
-    // Grant Lambda function minimum required permissions on this table only
-    this.table.grant(
-      props.lambdaFunction,
-      'dynamodb:GetItem',
-      'dynamodb:PutItem',
-      'dynamodb:Query',
-      'dynamodb:UpdateItem',
-      'dynamodb:DeleteItem'
-    );
   }
 }

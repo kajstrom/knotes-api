@@ -20,6 +20,7 @@ export interface DistributionConstructProps {
 export class DistributionConstruct extends Construct {
   public readonly distributionDomainName: string;
   public readonly distributionId: string;
+  public readonly distribution: cloudfront.Distribution;
 
   constructor(scope: Construct, id: string, props: DistributionConstructProps) {
     super(scope, id);
@@ -27,7 +28,7 @@ export class DistributionConstruct extends Construct {
     const apiOrigin = new origins.RestApiOrigin(props.restApi);
     const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(props.bucket);
 
-    const distribution = new cloudfront.Distribution(this, 'Distribution', {
+    this.distribution = new cloudfront.Distribution(this, 'Distribution', {
       defaultBehavior: {
         origin: apiOrigin,
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
@@ -44,8 +45,8 @@ export class DistributionConstruct extends Construct {
       domainNames: props.domainNames,
     });
 
-    this.distributionDomainName = distribution.distributionDomainName;
-    this.distributionId = distribution.distributionId;
+    this.distributionDomainName = this.distribution.distributionDomainName;
+    this.distributionId = this.distribution.distributionId;
 
     new cdk.CfnOutput(this, 'DistributionDomainName', { value: this.distributionDomainName });
     new cdk.CfnOutput(this, 'DistributionId', { value: this.distributionId });
