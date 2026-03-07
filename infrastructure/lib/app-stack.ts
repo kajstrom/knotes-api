@@ -1,8 +1,8 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
+import { DynamoConstruct } from './constructs/index.js';
 
 // TODO: import LambdaApi construct from './constructs/lambda-api'
-// TODO: import Database construct from './constructs/database'
 // TODO: import Storage construct from './constructs/storage'
 // TODO: import Dns construct from './constructs/dns'
 
@@ -22,7 +22,6 @@ export class AppStack extends cdk.Stack {
     this.domainName = props.domainName;
 
     // TODO: compose Storage construct
-    // TODO: compose Database construct
     // TODO: compose LambdaApi construct
     // TODO: compose Dns construct
   }
