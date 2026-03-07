@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib/core';
+import { AccountStack } from '../lib/account-stack.js';
 import { AppStack } from '../lib/app-stack.js';
 
 const app = new cdk.App();
 
+// Environment-specific stacks
 new AppStack(app, 'KnotesApiDev', {
   isProd: false,
   domainName: 'knotes-api-dev.kstrm.com',

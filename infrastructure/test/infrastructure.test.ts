@@ -1,6 +1,29 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Template } from 'aws-cdk-lib/assertions';
+import { AccountStack } from '../lib/account-stack.js';
 import { AppStack } from '../lib/app-stack.js';
+
+describe('KnotesApiAccount stack', () => {
+  const app = new cdk.App();
+  const stack = new AccountStack(app, 'KnotesApiAccount', {
+    githubOwner: 'kajstrom',
+    githubRepo: 'knotes-api',
+  });
+  const template = Template.fromStack(stack);
+
+  test('synthesizes without error', () => {
+    expect(template).toBeDefined();
+  });
+
+  test('creates IAM role for GitHub Actions', () => {
+    template.resourceCountIs('AWS::IAM::Role', 2); // GithubActionsRole + Lambda custom resource role
+  });
+
+  test('exports githubOidcRoleArn', () => {
+    expect(stack.githubOidcRoleArn).toBeDefined();
+    expect(typeof stack.githubOidcRoleArn).toBe('string');
+  });
+});
 
 describe('KnotesApiDev stack', () => {
   const app = new cdk.App();
