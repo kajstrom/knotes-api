@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
-import { DynamoConstruct } from './constructs/index.js';
+import { DynamoConstruct, AuthConstruct } from './constructs/index.js';
 
 // TODO: import LambdaApi construct from './constructs/lambda-api'
 // TODO: import Storage construct from './constructs/storage'
@@ -9,6 +9,7 @@ import { DynamoConstruct } from './constructs/index.js';
 export interface AppStackProps extends cdk.StackProps {
   readonly isProd: boolean;
   readonly domainName: string;
+  readonly cloudFrontDomain: string;
 }
 
 export class AppStack extends cdk.Stack {
@@ -20,6 +21,12 @@ export class AppStack extends cdk.Stack {
 
     this.isProd = props.isProd;
     this.domainName = props.domainName;
+
+    new AuthConstruct(this, 'Auth', {
+      isProd: props.isProd,
+      domainPrefix: props.domainName.split('.')[0],
+      cloudFrontDomain: props.cloudFrontDomain,
+    });
 
     // TODO: compose Storage construct
     // TODO: compose LambdaApi construct
