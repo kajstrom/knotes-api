@@ -4,8 +4,6 @@ import { Construct } from 'constructs';
 
 export interface AuthConstructProps {
   readonly isProd: boolean;
-  readonly domainPrefix: string;
-  readonly cloudFrontDomain: string;
 }
 
 export class AuthConstruct extends Construct {
@@ -26,23 +24,15 @@ export class AuthConstruct extends Construct {
         requireSymbols: false,
       },
       selfSignUpEnabled: true,
+      mfa: cognito.Mfa.OPTIONAL,
+      mfaSecondFactor: { otp: true, sms: false },
       removalPolicy: props.isProd ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
-    });
-
-    new cognito.UserPoolDomain(this, 'UserPoolDomain', {
-      userPool,
-      cognitoDomain: { domainPrefix: props.domainPrefix },
     });
 
     const appClient = new cognito.UserPoolClient(this, 'AppClient', {
       userPool,
       generateSecret: false,
-      oAuth: {
-        flows: { authorizationCodeGrant: true },
-        scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL, cognito.OAuthScope.PROFILE],
-        callbackUrls: [props.cloudFrontDomain],
-        logoutUrls: [props.cloudFrontDomain],
-      },
+      authFlows: { userSrp: true },
     });
 
     this.userPoolId = userPool.userPoolId;

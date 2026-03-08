@@ -14,5 +14,4 @@ new AccountStack(app, 'KnotesApiAccount', {
 new AppStack(app, 'KnotesApiProd', {
   isProd: true,
   domainName: 'knotes-api.kstrm.com',
-  cloudFrontDomain: 'https://placeholder.cloudfront.net',
 });

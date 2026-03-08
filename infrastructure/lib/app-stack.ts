@@ -12,7 +12,6 @@ import {
 export interface AppStackProps extends StackProps {
   readonly isProd: boolean;
   readonly domainName: string;
-  readonly cloudFrontDomain: string;
 }
 
 export class AppStack extends Stack {
@@ -27,8 +26,6 @@ export class AppStack extends Stack {
 
     const auth = new AuthConstruct(this, 'Auth', {
       isProd: props.isProd,
-      domainPrefix: props.domainName.split('.')[0],
-      cloudFrontDomain: props.cloudFrontDomain,
     });
 
     const storage = new StorageConstruct(this, 'Storage', {
@@ -44,7 +41,6 @@ export class AppStack extends Stack {
     const api = new ApiConstruct(this, 'Api', {
       tableName: dynamo.tableName,
       bucketName: storage.bucket.bucketName,
-      cognitoClientId: auth.appClientId,
       userPoolArn: auth.userPoolArn,
     });
 

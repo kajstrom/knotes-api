@@ -33,7 +33,6 @@ describe('KnotesApiProd stack', () => {
   const stack = new AppStack(app, 'KnotesApiProd', {
     isProd: true,
     domainName: 'knotes-api.kstrm.com',
-    cloudFrontDomain: 'https://placeholder.cloudfront.net',
     env: { account: '123456789012', region: 'us-east-1' },
   });
   const template = Template.fromStack(stack);
@@ -52,14 +51,11 @@ describe('KnotesApiProd stack', () => {
 });
 
 describe('AuthConstruct', () => {
-  const cloudFrontDomain = 'https://d1234abcd.cloudfront.net';
-
   function makeStack(isProd: boolean) {
     const app = new cdk.App();
     const stack = new AppStack(app, 'AuthTestStack', {
       isProd,
       domainName: 'knotes-auth-test',
-      cloudFrontDomain,
       env: { account: '123456789012', region: 'us-east-1' },
     });
     return Template.fromStack(stack);
@@ -90,21 +86,16 @@ describe('AuthConstruct', () => {
     });
   });
 
-  test('creates a User Pool Domain', () => {
-    devTemplate.resourceCountIs('AWS::Cognito::UserPoolDomain', 1);
-  });
-
-  test('creates a User Pool Client with authorization code grant and correct scopes', () => {
+  test('creates a User Pool Client with SRP auth flow', () => {
     devTemplate.hasResourceProperties('AWS::Cognito::UserPoolClient', {
-      AllowedOAuthFlows: ['code'],
-      AllowedOAuthScopes: ['openid', 'email', 'profile'],
+      ExplicitAuthFlows: ['ALLOW_USER_SRP_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
     });
   });
 
-  test('sets callback and logout URLs to cloudFrontDomain', () => {
-    devTemplate.hasResourceProperties('AWS::Cognito::UserPoolClient', {
-      CallbackURLs: [cloudFrontDomain],
-      LogoutURLs: [cloudFrontDomain],
+  test('configures optional MFA with TOTP only', () => {
+    devTemplate.hasResourceProperties('AWS::Cognito::UserPool', {
+      MfaConfiguration: 'OPTIONAL',
+      EnabledMfas: ['SOFTWARE_TOKEN_MFA'],
     });
   });
 
@@ -155,7 +146,6 @@ describe('ApiConstruct', () => {
     new ApiConstruct(stack, 'Api', {
       tableName: 'test-table',
       bucketName: 'test-bucket',
-      cognitoClientId: 'test-client-id',
       userPoolArn: 'arn:aws:cognito-idp:us-east-1:123456789012:userpool/us-east-1_test',
     });
     template = Template.fromStack(stack);
@@ -191,7 +181,6 @@ describe('ApiConstruct', () => {
         Variables: {
           TABLE_NAME: 'test-table',
           BUCKET_NAME: 'test-bucket',
-          COGNITO_CLIENT_ID: 'test-client-id',
         },
       },
     });
@@ -230,7 +219,6 @@ describe('ApiConstruct', () => {
     const construct = new ApiConstruct(stack, 'Api', {
       tableName: 'tbl',
       bucketName: 'bkt',
-      cognitoClientId: 'cid',
       userPoolArn: 'arn:aws:cognito-idp:us-east-1:123456789012:userpool/us-east-1_test',
     });
     expect(construct.apiUrl).toBeDefined();

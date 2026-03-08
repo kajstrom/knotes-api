@@ -9,7 +9,6 @@ import { Construct } from 'constructs';
 export interface ApiConstructProps {
   readonly tableName: string;
   readonly bucketName: string;
-  readonly cognitoClientId: string;
   readonly userPoolArn: string;
 }
 
@@ -36,7 +35,6 @@ export class ApiConstruct extends Construct {
       environment: {
         TABLE_NAME: props.tableName,
         BUCKET_NAME: props.bucketName,
-        COGNITO_CLIENT_ID: props.cognitoClientId,
       },
     });
 
