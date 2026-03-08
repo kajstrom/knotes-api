@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 
 export interface ApiConstructProps {
@@ -20,13 +21,18 @@ export class ApiConstruct extends Construct {
   constructor(scope: Construct, id: string, props: ApiConstructProps) {
     super(scope, id);
 
+    const logGroup = new logs.LogGroup(this, 'LogGroup', {
+      retention: logs.RetentionDays.ONE_WEEK,
+    });
+
     this.lambdaFunction = new lambda.Function(this, 'Handler', {
       runtime: lambda.Runtime.NODEJS_22_X,
       code: lambda.Code.fromAsset(path.join(__dirname, '../../../packages/api/dist')),
       handler: 'index.lambdaHandler',
-      memorySize: 256,
+      memorySize: 128,
       timeout: cdk.Duration.seconds(30),
-      tracing: lambda.Tracing.ACTIVE,
+      tracing: lambda.Tracing.PASS_THROUGH,
+      logGroup,
       environment: {
         TABLE_NAME: props.tableName,
         BUCKET_NAME: props.bucketName,

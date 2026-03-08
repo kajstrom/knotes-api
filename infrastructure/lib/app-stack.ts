@@ -7,14 +7,12 @@ import {
   DynamoConstruct,
   DistributionConstruct,
   DnsConstruct,
-  ObservabilityConstruct,
 } from './constructs/index.js';
 
 export interface AppStackProps extends StackProps {
   readonly isProd: boolean;
   readonly domainName: string;
   readonly cloudFrontDomain: string;
-  readonly alarmEmail: string;
 }
 
 export class AppStack extends Stack {
@@ -83,11 +81,5 @@ export class AppStack extends Stack {
 
     // Wire the Route 53 A record to the distribution now that both are available.
     dns.addAliasRecord(dist.distribution);
-
-    new ObservabilityConstruct(this, 'Observability', {
-      lambdaFunction: api.lambdaFunction,
-      restApi: api.restApi,
-      alarmEmail: props.alarmEmail,
-    });
   }
 }

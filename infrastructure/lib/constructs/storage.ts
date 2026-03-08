@@ -1,6 +1,6 @@
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import { RemovalPolicy } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
 export interface StorageConstructProps {
@@ -27,6 +27,12 @@ export class StorageConstruct extends Construct {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: props.isProd ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
       autoDeleteObjects: !props.isProd,
+      lifecycleRules: [
+        {
+          // Expire noncurrent object versions after 30 days to avoid unbounded storage growth
+          noncurrentVersionExpiration: Duration.days(30),
+        },
+      ],
     });
 
     this.bucketArn = this.bucket.bucketArn;

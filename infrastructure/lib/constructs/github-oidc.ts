@@ -321,7 +321,7 @@ export class GithubOidcConstruct extends Construct {
       })
     );
 
-    // CloudWatch & Logs: manage alarms and log groups
+    // CloudWatch & Logs: manage log groups created by Lambda/API Gateway
     this.role.addToPolicy(
       new iam.PolicyStatement({
         sid: 'CloudWatchAndLogs',
@@ -334,33 +334,10 @@ export class GithubOidcConstruct extends Construct {
           'logs:TagResource',
           'logs:UntagResource',
           'logs:ListTagsForResource',
-          'cloudwatch:PutMetricAlarm',
-          'cloudwatch:DeleteAlarms',
-          'cloudwatch:DescribeAlarms',
           'cloudwatch:TagResource',
           'cloudwatch:UntagResource',
         ],
         resources: ['*'],
-      })
-    );
-
-    // SNS: manage alarm notification topics
-    this.role.addToPolicy(
-      new iam.PolicyStatement({
-        sid: 'SNS',
-        actions: [
-          'sns:CreateTopic',
-          'sns:DeleteTopic',
-          'sns:GetTopicAttributes',
-          'sns:SetTopicAttributes',
-          'sns:Subscribe',
-          'sns:Unsubscribe',
-          'sns:ListSubscriptionsByTopic',
-          'sns:TagResource',
-          'sns:UntagResource',
-          'sns:ListTagsForResource',
-        ],
-        resources: [`arn:aws:sns:*:${accountId}:KnotesApi*`],
       })
     );
 

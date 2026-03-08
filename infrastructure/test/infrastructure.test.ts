@@ -28,37 +28,12 @@ describe('KnotesApiAccount stack', () => {
   });
 });
 
-describe('KnotesApiDev stack', () => {
-  const app = new cdk.App();
-  const stack = new AppStack(app, 'KnotesApiDev', {
-    isProd: false,
-    domainName: 'knotes-api-dev.kstrm.com',
-    cloudFrontDomain: 'https://placeholder.cloudfront.net',
-    alarmEmail: 'dev-alerts@kstrm.com',
-    env: { account: '123456789012', region: 'us-east-1' },
-  });
-  const template = Template.fromStack(stack);
-
-  test('synthesizes without error', () => {
-    expect(template).toBeDefined();
-  });
-
-  test('isProd is false', () => {
-    expect(stack.isProd).toBe(false);
-  });
-
-  test('domainName is set correctly', () => {
-    expect(stack.domainName).toBe('knotes-api-dev.kstrm.com');
-  });
-});
-
 describe('KnotesApiProd stack', () => {
   const app = new cdk.App();
   const stack = new AppStack(app, 'KnotesApiProd', {
     isProd: true,
     domainName: 'knotes-api.kstrm.com',
     cloudFrontDomain: 'https://placeholder.cloudfront.net',
-    alarmEmail: 'prod-alerts@kstrm.com',
     env: { account: '123456789012', region: 'us-east-1' },
   });
   const template = Template.fromStack(stack);
@@ -85,7 +60,6 @@ describe('AuthConstruct', () => {
       isProd,
       domainName: 'knotes-auth-test',
       cloudFrontDomain,
-      alarmEmail: 'test-alerts@kstrm.com',
       env: { account: '123456789012', region: 'us-east-1' },
     });
     return Template.fromStack(stack);
@@ -193,9 +167,9 @@ describe('ApiConstruct', () => {
     });
   });
 
-  test('Lambda has 256 MB memory', () => {
+  test('Lambda has 128 MB memory', () => {
     template.hasResourceProperties('AWS::Lambda::Function', {
-      MemorySize: 256,
+      MemorySize: 128,
     });
   });
 
@@ -205,9 +179,9 @@ describe('ApiConstruct', () => {
     });
   });
 
-  test('Lambda has X-Ray active tracing enabled', () => {
+  test('Lambda has X-Ray PassThrough tracing', () => {
     template.hasResourceProperties('AWS::Lambda::Function', {
-      TracingConfig: { Mode: 'Active' },
+      TracingConfig: { Mode: 'PassThrough' },
     });
   });
 

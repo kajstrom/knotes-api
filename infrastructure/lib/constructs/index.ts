@@ -6,4 +6,3 @@ export * from './auth.js';
 export * from './lambda-api.js';
 export * from './distribution.js';
 export * from './dns.js';
-export * from './observability.js';
