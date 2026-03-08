@@ -15,18 +15,22 @@ export interface DynamoItem {
 }
 
 const client = new DynamoDBClient({});
-export const docClient = DynamoDBDocumentClient.from(client);
+export const docClient = DynamoDBDocumentClient.from(client, {
+  marshallOptions: { removeUndefinedValues: true },
+});
 
-const TABLE_NAME = process.env.TABLE_NAME;
-
-if (!TABLE_NAME) {
-  throw new Error('TABLE_NAME environment variable is not set');
+function getTableName(): string {
+  const tableName = process.env.TABLE_NAME;
+  if (!tableName) {
+    throw new Error('TABLE_NAME environment variable is not set');
+  }
+  return tableName;
 }
 
 export async function getItem(pk: string, sk: string): Promise<DynamoItem | undefined> {
   const { Item } = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
+      TableName: getTableName(),
       Key: { PK: pk, SK: sk },
     })
   );
@@ -36,7 +40,7 @@ export async function getItem(pk: string, sk: string): Promise<DynamoItem | unde
 export async function putItem(item: DynamoItem): Promise<void> {
   await docClient.send(
     new PutCommand({
-      TableName: TABLE_NAME,
+      TableName: getTableName(),
       Item: item,
     })
   );
@@ -52,7 +56,7 @@ export async function queryByPk(pk: string, skPrefix?: string): Promise<DynamoIt
 
   const { Items = [] } = await docClient.send(
     new QueryCommand({
-      TableName: TABLE_NAME,
+      TableName: getTableName(),
       KeyConditionExpression: keyCondition,
       ExpressionAttributeValues: expressionValues,
     })
@@ -67,6 +71,10 @@ export async function updateItem(
 ): Promise<DynamoItem | undefined> {
   const entries = Object.entries(updates);
 
+  if (entries.length === 0) {
+    throw new Error('updateItem called with no update fields');
+  }
+
   const expressionParts = entries.map((_, i) => `#attr${i} = :val${i}`);
   const expressionAttributeNames: Record<string, string> = {};
   const expressionAttributeValues: Record<string, unknown> = {};
@@ -79,7 +87,7 @@ export async function updateItem(
 
   const { Attributes } = await docClient.send(
     new UpdateCommand({
-      TableName: TABLE_NAME,
+      TableName: getTableName(),
       Key: { PK: pk, SK: sk },
       UpdateExpression: `SET ${expressionParts.join(', ')}`,
       ExpressionAttributeNames: expressionAttributeNames,
@@ -93,7 +101,7 @@ export async function updateItem(
 export async function deleteItem(pk: string, sk: string): Promise<void> {
   await docClient.send(
     new DeleteCommand({
-      TableName: TABLE_NAME,
+      TableName: getTableName(),
       Key: { PK: pk, SK: sk },
     })
   );
