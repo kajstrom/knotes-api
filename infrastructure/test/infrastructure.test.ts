@@ -35,6 +35,7 @@ describe('KnotesApiDev stack', () => {
     domainName: 'knotes-api-dev.kstrm.com',
     cloudFrontDomain: 'https://placeholder.cloudfront.net',
     alarmEmail: 'dev-alerts@kstrm.com',
+    env: { account: '123456789012', region: 'us-east-1' },
   });
   const template = Template.fromStack(stack);
 
@@ -58,6 +59,7 @@ describe('KnotesApiProd stack', () => {
     domainName: 'knotes-api.kstrm.com',
     cloudFrontDomain: 'https://placeholder.cloudfront.net',
     alarmEmail: 'prod-alerts@kstrm.com',
+    env: { account: '123456789012', region: 'us-east-1' },
   });
   const template = Template.fromStack(stack);
 
@@ -84,6 +86,7 @@ describe('AuthConstruct', () => {
       domainName: 'knotes-auth-test',
       cloudFrontDomain,
       alarmEmail: 'test-alerts@kstrm.com',
+      env: { account: '123456789012', region: 'us-east-1' },
     });
     return Template.fromStack(stack);
   }

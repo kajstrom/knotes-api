@@ -40,6 +40,8 @@ export class ApiConstruct extends Construct {
       restApiName: 'knotes-api',
       deployOptions: {
         stageName: 'api',
+        throttlingRateLimit: 100,
+        throttlingBurstLimit: 200,
       },
     });
 

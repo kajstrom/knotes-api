@@ -5,6 +5,7 @@ import { GithubOidcConstruct } from './constructs/github-oidc.js';
 export interface AccountStackProps extends cdk.StackProps {
   readonly githubOwner: string;
   readonly githubRepo: string;
+  readonly allowedRefs?: string[];
 }
 
 /**
@@ -21,6 +22,7 @@ export class AccountStack extends cdk.Stack {
     const githubOidc = new GithubOidcConstruct(this, 'GithubOidc', {
       githubOwner: props.githubOwner,
       githubRepo: props.githubRepo,
+      allowedRefs: props.allowedRefs,
     });
 
     this.githubOidcRoleArn = githubOidc.roleArn;
