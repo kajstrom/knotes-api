@@ -9,12 +9,6 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
-// Get all node_modules as external by default, except aws-sdk
-const externalModules = fs
-  .readdirSync(path.resolve(__dirname, '../node_modules'))
-  .filter((dir) => !dir.startsWith('.') && dir !== 'aws-sdk' && dir !== '@aws-sdk')
-  .map((dir) => dir);
-
 esbuild
   .build({
     entryPoints: [path.resolve(__dirname, '../src/handler.ts')],
@@ -22,7 +16,7 @@ esbuild
     bundle: true,
     platform: 'node',
     target: 'node22',
-    external: externalModules,
+    external: ['@aws-sdk/*'],
     format: 'cjs',
     sourcemap: false,
   })

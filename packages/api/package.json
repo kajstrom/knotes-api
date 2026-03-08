@@ -5,7 +5,21 @@
   "main": "index.js",
   "scripts": {
     "build": "tsx scripts/build.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/*.test.ts"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "tsconfig": "./tsconfig.json"
+        }
+      ]
+    }
   },
   "keywords": [],
   "author": "",
@@ -14,12 +28,18 @@
     "@aws-sdk/client-dynamodb": "^3.1004.0",
     "@aws-sdk/lib-dynamodb": "^3.1004.0",
     "@fastify/aws-lambda": "^6.4.0",
-    "fastify": "^5.7.4"
+    "fastify": "^5.7.4",
+    "jsonwebtoken": "^9.0.3",
+    "jwks-rsa": "^4.0.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.161",
+    "@types/jest": "^30",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.3.0",
     "esbuild": "^0.27.3",
+    "jest": "^30",
+    "ts-jest": "^29",
     "tsx": "^4.7.0"
   }
 }

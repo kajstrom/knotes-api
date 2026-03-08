@@ -6,6 +6,16 @@ import { AccountStack } from '../lib/account-stack.js';
 import { AppStack } from '../lib/app-stack.js';
 import { ApiConstruct } from '../lib/constructs/index.js';
 
+// Ensure a minimal dist artifact exists before any describe body runs.
+// AppStack instantiates ApiConstruct which calls Code.fromAsset at construction
+// time (Jest collection phase), so this must happen at module top-level.
+const distPath = path.join(__dirname, '../../packages/api/dist');
+fs.mkdirSync(distPath, { recursive: true });
+const distIndex = path.join(distPath, 'index.js');
+if (!fs.existsSync(distIndex)) {
+  fs.writeFileSync(distIndex, 'exports.lambdaHandler = async () => ({});');
+}
+
 describe('KnotesApiAccount stack', () => {
   const app = new cdk.App();
   const stack = new AccountStack(app, 'KnotesApiAccount', {
@@ -131,14 +141,6 @@ describe('ApiConstruct', () => {
   let template!: Template;
 
   beforeAll(() => {
-    // Ensure a minimal dist artifact exists so Code.fromAsset can hash the directory.
-    const distPath = path.join(__dirname, '../../packages/api/dist');
-    fs.mkdirSync(distPath, { recursive: true });
-    const indexJs = path.join(distPath, 'index.js');
-    if (!fs.existsSync(indexJs)) {
-      fs.writeFileSync(indexJs, 'exports.lambdaHandler = async () => ({});');
-    }
-
     const app = new cdk.App();
     const stack = new cdk.Stack(app, 'ApiTestStack', {
       env: { account: '123456789012', region: 'us-east-1' },
@@ -147,6 +149,7 @@ describe('ApiConstruct', () => {
       tableName: 'test-table',
       bucketName: 'test-bucket',
       userPoolArn: 'arn:aws:cognito-idp:us-east-1:123456789012:userpool/us-east-1_test',
+      userPoolId: 'us-east-1_testpool',
     });
     template = Template.fromStack(stack);
   });
@@ -186,6 +189,16 @@ describe('ApiConstruct', () => {
     });
   });
 
+  test('Lambda has COGNITO_POOL_ID environment variable', () => {
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Environment: {
+        Variables: {
+          COGNITO_POOL_ID: 'us-east-1_testpool',
+        },
+      },
+    });
+  });
+
   test('creates a REST API Gateway', () => {
     template.resourceCountIs('AWS::ApiGateway::RestApi', 1);
   });
@@ -220,6 +233,7 @@ describe('ApiConstruct', () => {
       tableName: 'tbl',
       bucketName: 'bkt',
       userPoolArn: 'arn:aws:cognito-idp:us-east-1:123456789012:userpool/us-east-1_test',
+      userPoolId: 'us-east-1_testpool',
     });
     expect(construct.apiUrl).toBeDefined();
     expect(construct.lambdaFunction).toBeDefined();
