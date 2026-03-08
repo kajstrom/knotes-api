@@ -150,6 +150,7 @@ describe('ApiConstruct', () => {
       bucketName: 'test-bucket',
       userPoolArn: 'arn:aws:cognito-idp:us-east-1:123456789012:userpool/us-east-1_test',
       userPoolId: 'us-east-1_testpool',
+      appClientId: 'test-client-id',
     });
     template = Template.fromStack(stack);
   });
@@ -199,6 +200,16 @@ describe('ApiConstruct', () => {
     });
   });
 
+  test('Lambda has COGNITO_CLIENT_ID environment variable', () => {
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Environment: {
+        Variables: {
+          COGNITO_CLIENT_ID: 'test-client-id',
+        },
+      },
+    });
+  });
+
   test('creates a REST API Gateway', () => {
     template.resourceCountIs('AWS::ApiGateway::RestApi', 1);
   });
@@ -234,6 +245,7 @@ describe('ApiConstruct', () => {
       bucketName: 'bkt',
       userPoolArn: 'arn:aws:cognito-idp:us-east-1:123456789012:userpool/us-east-1_test',
       userPoolId: 'us-east-1_testpool',
+      appClientId: 'test-client-id',
     });
     expect(construct.apiUrl).toBeDefined();
     expect(construct.lambdaFunction).toBeDefined();

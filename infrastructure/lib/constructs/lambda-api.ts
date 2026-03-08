@@ -11,6 +11,7 @@ export interface ApiConstructProps {
   readonly bucketName: string;
   readonly userPoolArn: string;
   readonly userPoolId: string;
+  readonly appClientId: string;
 }
 
 export class ApiConstruct extends Construct {
@@ -37,6 +38,7 @@ export class ApiConstruct extends Construct {
         TABLE_NAME: props.tableName,
         BUCKET_NAME: props.bucketName,
         COGNITO_POOL_ID: props.userPoolId,
+        COGNITO_CLIENT_ID: props.appClientId,
       },
     });
 

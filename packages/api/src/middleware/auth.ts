@@ -38,12 +38,40 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
   const kid = decoded.header.kid;
 
   try {
+    const poolId = process.env.COGNITO_POOL_ID;
+    if (!poolId) {
+      throw new Error('COGNITO_POOL_ID environment variable is not set');
+    }
+
+    const clientId = process.env.COGNITO_CLIENT_ID;
+    if (!clientId) {
+      throw new Error('COGNITO_CLIENT_ID environment variable is not set');
+    }
+
+    const region = poolId.split('_')[0];
+    const issuer = `https://cognito-idp.${region}.amazonaws.com/${poolId}`;
+
     const client = getJwksClient();
     const signingKey = await client.getSigningKey(kid);
     const publicKey = signingKey.getPublicKey();
 
-    const payload = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-    request.user = payload as CognitoClaims;
+    const payload = jwt.verify(token, publicKey, {
+      algorithms: ['RS256'],
+      issuer,
+      audience: clientId,
+    });
+
+    if (!payload || typeof payload === 'string') {
+      throw new jwt.JsonWebTokenError('Invalid token payload');
+    }
+
+    const claims = payload as jwt.JwtPayload;
+
+    if (claims.token_use !== 'id') {
+      throw new jwt.JsonWebTokenError('Invalid token use');
+    }
+
+    request.user = claims as CognitoClaims;
   } catch (err) {
     if (
       err instanceof jwt.JsonWebTokenError ||
