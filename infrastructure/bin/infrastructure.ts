@@ -5,6 +5,12 @@ import { AppStack } from '../lib/app-stack.js';
 
 const app = new cdk.App();
 
+// Account-level stack (OIDC provider for GitHub Actions CI/CD)
+new AccountStack(app, 'KnotesApiAccount', {
+  githubOwner: 'kajstrom',
+  githubRepo: 'knotes-api',
+});
+
 const devAlarmEmail = app.node.tryGetContext('devAlarmEmail') as string;
 const prodAlarmEmail = app.node.tryGetContext('prodAlarmEmail') as string;
 
