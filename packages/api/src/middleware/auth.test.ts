@@ -22,14 +22,17 @@ const mockDecode = jwt.decode as jest.Mock;
 const mockVerify = jwt.verify as jest.Mock;
 
 const MOCK_POOL_ID = 'us-east-1_testPool123';
+const MOCK_CLIENT_ID = 'test-client-id-456';
 const MOCK_TOKEN = 'header.payload.signature';
 const MOCK_KID = 'test-kid-123';
 const MOCK_PUBLIC_KEY = '-----BEGIN PUBLIC KEY-----\nMockKey\n-----END PUBLIC KEY-----';
+const MOCK_ISSUER = `https://cognito-idp.us-east-1.amazonaws.com/${MOCK_POOL_ID}`;
 const MOCK_CLAIMS = {
   sub: 'user-abc-123',
   email: 'test@example.com',
   token_use: 'id',
-  iss: `https://cognito-idp.us-east-1.amazonaws.com/${MOCK_POOL_ID}`,
+  iss: MOCK_ISSUER,
+  aud: MOCK_CLIENT_ID,
   exp: Math.floor(Date.now() / 1000) + 3600,
   iat: Math.floor(Date.now() / 1000),
 };
@@ -43,6 +46,7 @@ describe('authMiddleware', () => {
 
   beforeAll(async () => {
     process.env.COGNITO_POOL_ID = MOCK_POOL_ID;
+    process.env.COGNITO_CLIENT_ID = MOCK_CLIENT_ID;
     (jwksRsa.JwksClient as jest.Mock).mockImplementation(() => ({
       getSigningKey: mockGetSigningKey,
     }));
@@ -174,6 +178,27 @@ describe('authMiddleware', () => {
       });
       expect(response.statusCode).toBe(200);
       expect(response.json()).toEqual({ ok: true });
+      expect(mockVerify).toHaveBeenCalledWith(MOCK_TOKEN, MOCK_PUBLIC_KEY, {
+        algorithms: ['RS256'],
+        issuer: MOCK_ISSUER,
+        audience: MOCK_CLIENT_ID,
+      });
+    });
+
+    it('returns 401 when token_use is not "id"', async () => {
+      mockDecode.mockReturnValue(makeDecodedToken(MOCK_KID));
+      mockGetSigningKey.mockResolvedValue({
+        getPublicKey: jest.fn().mockReturnValue(MOCK_PUBLIC_KEY),
+      });
+      mockVerify.mockReturnValue({ ...MOCK_CLAIMS, token_use: 'access' });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/test',
+        headers: { authorization: `Bearer ${MOCK_TOKEN}` },
+      });
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toEqual({ error: 'Unauthorized' });
     });
   });
 
@@ -203,6 +228,27 @@ describe('authMiddleware', () => {
       });
       await testApp.close();
       process.env.COGNITO_POOL_ID = savedPoolId;
+
+      expect(response.statusCode).toBe(500);
+    });
+  });
+
+  describe('missing COGNITO_CLIENT_ID', () => {
+    it('returns 500 when COGNITO_CLIENT_ID is not set', async () => {
+      const savedClientId = process.env.COGNITO_CLIENT_ID;
+      delete process.env.COGNITO_CLIENT_ID;
+
+      mockDecode.mockReturnValue(makeDecodedToken(MOCK_KID));
+      mockGetSigningKey.mockResolvedValue({
+        getPublicKey: jest.fn().mockReturnValue(MOCK_PUBLIC_KEY),
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/test',
+        headers: { authorization: `Bearer ${MOCK_TOKEN}` },
+      });
+      process.env.COGNITO_CLIENT_ID = savedClientId;
 
       expect(response.statusCode).toBe(500);
     });

@@ -43,6 +43,7 @@ export class AppStack extends Stack {
       bucketName: storage.bucket.bucketName,
       userPoolArn: auth.userPoolArn,
       userPoolId: auth.userPoolId,
+      appClientId: auth.appClientId,
     });
 
     // Grant the Lambda function minimum required permissions on DynamoDB and S3.

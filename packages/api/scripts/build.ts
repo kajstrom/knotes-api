@@ -16,7 +16,7 @@ esbuild
     bundle: true,
     platform: 'node',
     target: 'node22',
-    external: ['@aws-sdk/*'],
+    external: [],
     format: 'cjs',
     sourcemap: false,
   })
