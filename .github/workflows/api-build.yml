@@ -1,0 +1,32 @@
+name: API Build
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/api/**'
+
+jobs:
+  build:
+    name: Build API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/api/package-lock.json
+
+      - name: Install dependencies
+        working-directory: packages/api
+        run: npm ci
+
+      - name: Build
+        working-directory: packages/api
+        run: npm run build
