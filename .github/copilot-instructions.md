@@ -2,7 +2,7 @@
 
 ## What This App Does
 
-Knotes API is a notes application backend. It is a Fastify HTTP API deployed as an AWS Lambda function, fronted by API Gateway. Infrastructure is managed with AWS CDK (TypeScript). The project is in early development — the API layer is scaffolded but not yet implemented, and the CDK `AppStack` has four pending constructs (LambdaApi, Database, Storage, Dns) stubbed out as TODOs.
+Knotes API is a notes application backend. It is a Fastify HTTP API deployed as an AWS Lambda function, fronted by API Gateway. Infrastructure is managed with AWS CDK (TypeScript). The project is in early development — the API layer is scaffolded but not yet implemented.
 
 ---
 
@@ -25,8 +25,10 @@ Knotes API is a notes application backend. It is a Fastify HTTP API deployed as 
 
 ```
 knotes-api/
-├── package.json              # Root — shared devDeps (eslint, prettier, typescript)
+├── package.json              # Root — shared devDeps (eslint, prettier, typescript, tsx)
 ├── tsconfig.json             # Root tsconfig (ESNext, covers packages/** & infrastructure/**)
+├── scripts/
+│   └── get-token.ts          # Dev utility: fetches a Cognito IdToken via SRP (see below)
 ├── packages/
 │   └── api/
 │       ├── package.json      # API-specific deps & scripts
@@ -43,12 +45,18 @@ knotes-api/
     ├── package.json          # CDK deps & scripts
     ├── tsconfig.json         # NodeNext module resolution
     ├── cdk.json              # CDK app: ts-node bin/infrastructure.ts
-    ├── bin/infrastructure.ts # Creates Dev & Prod AppStack instances
+    ├── bin/infrastructure.ts # Creates the production AppStack
     ├── lib/
     │   ├── account-stack.ts  # Account-level: GitHub OIDC for CI/CD
-    │   ├── app-stack.ts      # App-level (Dev/Prod) — constructs are all TODO
+    │   ├── app-stack.ts      # App-level stack
     │   └── constructs/
     │       ├── index.ts      # Barrel export
+    │       ├── auth.ts       # Cognito User Pool (SRP + optional TOTP MFA)
+    │       ├── lambda-api.ts # Lambda + API Gateway + Cognito authorizer
+    │       ├── dynamodb.ts   # DynamoDB table
+    │       ├── storage.ts    # S3 bucket
+    │       ├── distribution.ts # CloudFront distribution
+    │       ├── dns.ts        # Route 53 + ACM certificate
     │       └── github-oidc.ts # GitHub Actions OIDC IAM role
     └── test/
         └── infrastructure.test.ts # Jest CDK assertion tests
@@ -79,11 +87,28 @@ npm run build        # tsc compile
 npm test             # jest (CDK assertion tests)
 npx cdk synth        # synthesize CloudFormation
 npx cdk deploy KnotesApiAccount   # one-time account bootstrap
-npx cdk deploy KnotesApiDev       # deploy Dev environment
 npx cdk deploy KnotesApiProd      # deploy Prod environment
 ```
 
 CDK executes via `ts-node` (configured in `cdk.json`), no pre-compile needed for deploy/synth.
+
+### Getting a token for manual API testing (root)
+
+```bash
+# From repo root — reads CDK stack outputs for the IDs
+COGNITO_USER_POOL_ID=us-east-1_xxx \
+COGNITO_CLIENT_ID=yyy \
+COGNITO_USERNAME=test@example.com \
+COGNITO_PASSWORD='Test1234' \
+npx tsx scripts/get-token.ts
+
+# Pipe directly into curl
+TOKEN=$(COGNITO_USER_POOL_ID=... COGNITO_CLIENT_ID=... COGNITO_USERNAME=... COGNITO_PASSWORD=... npx tsx scripts/get-token.ts)
+curl -H "Authorization: Bearer $TOKEN" https://knotes-api.kstrm.com/api/...
+```
+
+The `UserPoolId` and `AppClientId` values are printed as CloudFormation outputs after `cdk deploy`.
+If MFA is enrolled on the account the script will prompt for a TOTP code interactively.
 
 ---
 
@@ -94,7 +119,6 @@ CDK executes via `ts-node` (configured in `cdk.json`), no pre-compile needed for
 - **API** (root `tsconfig.json`) uses `ESNext`/`node` resolution — no `.js` extensions required on local imports.
 - Barrel `index.ts` files exist in all `src/` subdirectories; add new exports through them.
 - New CDK constructs belong in `infrastructure/lib/constructs/` and must be re-exported from `constructs/index.ts`.
-- `AppStack` has four planned constructs to implement: `LambdaApi`, `Database`, `Storage`, `Dns`.
 - No `.eslintrc` or `.prettierrc` config files exist yet — do not rely on auto-formatting enforcement.
 - Keep `.copilot-instructions.md` up to date with any relevant coding guidelines or project conventions.
 - Make sure tests pass and test coverage is sufficient. Consider adding tests for new features or bug fixes. Follow best practices for test structure and assertions.
@@ -103,10 +127,9 @@ CDK executes via `ts-node` (configured in `cdk.json`), no pre-compile needed for
 
 ## Environments & Deployment
 
-| Stack           | Domain                     | `isProd` |
-| --------------- | -------------------------- | -------- |
-| `KnotesApiDev`  | `knotes-api-dev.kstrm.com` | `false`  |
-| `KnotesApiProd` | `knotes-api.kstrm.com`     | `true`   |
+| Stack           | Domain                 | `isProd` |
+| --------------- | ---------------------- | -------- |
+| `KnotesApiProd` | `knotes-api.kstrm.com` | `true`   |
 
 GitHub Actions CI/CD uses the OIDC IAM role created by `AccountStack` (`KnotesApiAccount`) — no long-lived AWS credentials needed in CI.
 
