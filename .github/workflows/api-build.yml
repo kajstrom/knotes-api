@@ -3,7 +3,12 @@ name: API Build
 on:
   pull_request:
     branches:
-      - main
+      - master
+    paths:
+      - 'packages/api/**'
+  push:
+    branches:
+      - master
     paths:
       - 'packages/api/**'
 
