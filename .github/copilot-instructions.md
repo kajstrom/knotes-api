@@ -138,3 +138,4 @@ GitHub Actions CI/CD uses the OIDC IAM role created by `AccountStack` (`KnotesAp
 ## Way of working
 
 - Suggest good git commit messages when code changes using Conventional Commits format
+- Important: When starting a new implementation, branch out from `master` and make sure the local master is up to date with `origin/master`.
